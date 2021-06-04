@@ -7,366 +7,274 @@ using System.Threading.Tasks;
 
 namespace _1Класс
 {
-    class Class2
+    struct Element
     {
-        public static int[,] ReadMassive(string path, out int n, out int m)
+        public int Delivery { get; set; }
+        public int Value { get; set; }
+        public static int FindMinElement(int a, int b)
         {
-            List<string[]> temp_list_massive = new List<string[]>();
-            try
+            if (a > b) return b;
+            if (a == b) { return a; }
+            else return a;
+        }
+    }
+    class PotentialMethod
+    {
+        int n, m, summ;
+        int[] whogive, whoget, minData, U, V;
+        int[,] delta;
+        bool optimSolution = false;
+        bool[,] elemChecked;
+        List<int[]> maxDelta = new List<int[]>();
+        Element[,] mainData;
+        MinDistrib md;
+        public PotentialMethod(string path)
+        {
+            List<string[]> newdata = ReadSaveData.ReadData(path);
+            n = newdata.Count - 1;
+            m = newdata.First().Length - 1;
+            whogive = new int[n];
+            whoget = new int[m];
+            V = new int[n];
+            U = new int[m];
+            elemChecked = new bool[n, m];
+            mainData = new Element[n, m];
+
+            //для чтения надо первую ячейку сделать НУЛЕМ! остальные - как в таблице (после нуля по строчкам - покупатели, по столбцам - поставщики, и тд)
+            for (int i = 0; i < newdata.Count; i++)
             {
-                StreamReader sr = new StreamReader(path);
+                for (int j = 0; j < newdata.First().Length; j++)
+                {
+                    if (i != 0)
+                    {
+                        whogive[i - 1] = Convert.ToInt32(newdata[i][0]);
+                        if (j != 0)
+                        {
+                            whoget[j - 1] = Convert.ToInt32(newdata[0][j]);
+                            mainData[i - 1, j - 1].Value = Convert.ToInt32(newdata[i][j]);
+                        }
+                    }
+                }
+            }
+        }
+        // раньше был метод, но теперь часть конструктора. по итогу использую для отладки
+        //public void DataReaderConverter(string path)
+        //{
+
+        //    MinDistrib md = new MinDistrib(mainData, whogive, whoget, m, n);
+        //    md.MinDistribute();
+        //    for (int i = 0; i < n; i++)
+        //    {
+        //        for (int j = 0; j < m; j++)
+        //            Console.Write(md.distrMatric[i, j] + "\t");
+        //        Console.WriteLine();
+        //    }
+        //    Console.WriteLine(md.CountNotNullElement);
+        //}
+        void CheckVir(MinDistrib mg)
+        {
+            if (mg.CountNotNullElement != m + n - 1)
+            {
+                FindMin(1);
                 while (true)
                 {
-                    string line = sr.ReadLine();
-                    if (line == null)
+                    if (mainData[minData[1], minData[2]].Delivery == 0)
                     {
+                        mainData[minData[1], minData[2]].Delivery = -1;
+                        mg.CountNotNullElement++;
                         break;
                     }
-                    temp_list_massive.Add(line.Split(';'));
+                    else FindMin(1);
                 }
             }
-            catch
-            { }
-            n = Convert.ToInt32(temp_list_massive.Count);
-            m = Convert.ToInt32(temp_list_massive[0].Length);
-            int[,] massive = new int[Convert.ToInt32(temp_list_massive.Count), Convert.ToInt32(temp_list_massive[0].Length)];
-
-            for (int i = 0; i < 6; i++)
-            {
-                for (int j = 0; j < Convert.ToInt32(temp_list_massive[0].Length); j++)
-                {
-                    massive[i, j] = Convert.ToInt32(temp_list_massive[i][j]);
-                }
-            }
-            return massive;
         }
-        public static void WriteMassive(string path, string line)
+        public void MainSolution()
         {
-            StreamWriter sw = new StreamWriter(path, true, Encoding.UTF8);
-            sw.Write(line);
-            sw.Close();
-        }
-        public void Poten(string in_path, string out_path)
-        {
-            List<List<int[]>> data = new List<List<int[]>>();
-            data.Add(new List<int[]>());
-            data.Add(new List<int[]>());
-            data.Add(new List<int[]>());
-
-            data[0].Add(new int[] { 6, 0 });
-            data[0].Add(new int[] { 8, 0 });
-            data[0].Add(new int[] { 1000, 0 });
-
-            data[1].Add(new int[] { 3, 0 });
-            data[1].Add(new int[] { 4, 0 });
-            data[1].Add(new int[] { 3, 0 });
-
-            data[2].Add(new int[] { 1000, 0 });
-            data[2].Add(new int[] { 1, 0 });
-            data[2].Add(new int[] { 6, 0 });
-
-            List<int> M = new List<int>() { 30, 30, 20 };//M предложение
-            List<int> N = new List<int>() { 40, 30, 10 };//N спрос
-
-            //List<List<int>> _1st_list = new List<List<int>>();
-            //List<List<int>> _2st_list = new List<List<int>>();
-            //List<List<int>> _3st_list = new List<List<int>>();
-
-            //_1st_list.Add(new List<int>());
-            //_1st_list.Add(new List<int>());
-            //_2st_list.Add(new List<int>());
-            //_2st_list.Add(new List<int>());
-            //_3st_list.Add(new List<int>());
-            //_3st_list.Add(new List<int>());
-
-            int iN = 0, iM = 0, i = 0, j = 0;
-            while (iN != 3 && iM != 3)
+            //выполняется распределение по минимальному элементу
+            md = new MinDistrib(mainData, whogive, whoget, m, n);
+            //проверка на вырожденность, где добавляется фиктивная поставка
+            while (md.MinDistribute(ref mainData) != m + n - 1)
             {
-                try
-                {
-                    if (N[iN] > M[iM])
-                    {
-                        data[i][j][1] = M[iM];
-                        N[iN] = N[iN] - M[iM];
-                        iM++;
-                        i++;
-                    }
-
-                    if (N[iN] < M[iM])
-                    {
-                        data[i][j][1] = N[iN];
-                        M[iM] = M[iM] - N[iN];
-                        iN++;
-                        j++;
-                    }
-                    if (N[iN] == M[iM])
-                    {
-                        data[i][j][1] = N[iN];
-                        M[iM] = 0;
-                        N[iN] = 0;
-                        i++;
-                        j++;
-                    }
-                }
-                catch
-                {
-                    break;
-                }
+                CheckVir(md);
             }
-
-            while (true)
+            while (optimSolution == false)
             {
-                int v = 0; //Количество заполенных клеток
-                int _vdata = data.Count + data[0].Count - 1;
-                for (int q = 0; q < data.Count; q++)
+                // заполняет изначально массивы с потенциалами, чтобы потом перезаписать на нормальные
+                V = new int[n];
+                for (int i = 0; i < V.Length; i++)
                 {
-                    foreach (int[] a in data[q])
-                    {
-                        Console.Write("{0}[{1}]; ", a[0], a[1]);
-                        if (a[1] != 0)
-                        {
-                            v++;
-                        }
-                    }
-                    Console.WriteLine();
+                    V[i] = 99999;
                 }
-                if (v == _vdata)
+                U = new int[m];
+                for (int i = 0; i < U.Length; i++)
                 {
-                    Console.WriteLine("Таблица невырожденная!");
+                    U[i] = 99999;
                 }
-
-                List<int> U = new List<int>() { 0, 0, 0 };
-                List<int> V = new List<int>() { 0, 0, 0 };
-
-                //Расставление потенциалов
-                for (int q = 0; q < data.Count; q++)
+                //нахождение макс. затрат в заполненых ячейках, чтобы были хоть какие-то значения для подсчета потенциалов
+                double MaxCost = 0;
+                int maxV = 0;
+                int maxU = 0;
+                for (int i = 0; i < n; i++)
                 {
-                    for (int k = 0; k < data[q].Count; k++)
+                    for (int j = 0; j < m; j++)
                     {
-                        if (data[q][k][1] != 0)
+                        if (mainData[i, j].Delivery != 0 && mainData[i, j].Value > MaxCost)
                         {
-                            if (U[k] == 0 && q != 0 && k != 0)
-                            {
-                                U[k] = data[q][k][0] - V[q];
-                            }
-                            if (V[q] == 0)
-                            {
-                                V[q] = data[q][k][0] - U[k];
-                            }
+                            MaxCost = mainData[i, j].Value;
+                            maxV = i;
+                            maxU = j;
                         }
                     }
                 }
-                Console.WriteLine();
-                Console.WriteLine("Потенциалы:");
-                foreach (int a in U)
-                {
-                    Console.Write("{0}; ", a);
-                }
-                Console.WriteLine();
-                foreach (int a in V)
-                {
-                    Console.Write("{0}; ", a);
-                }
-
-                //Проверка оптимальности распределения
-                List<int[]> dnk = new List<int[]>();
-                for (int q = 0; q < data.Count; q++)
-                {
-                    for (int k = 0; k < data[q].Count; k++)
-                    {
-                        if (data[q][k][1] == 0 && data[q][k][0] != 0)
-                        {
-                            int[] temp = new int[3];
-                            temp[0] = V[q] + U[k] - data[q][k][0];
-                            temp[1] = q;
-                            temp[2] = k;
-                            dnk.Add(temp);
-                        }
-                    }
-                    Console.WriteLine();
-                }
-
-                foreach (int[] a in dnk)
-                {
-                    Console.Write("{0}[{1},{2}]; ", a[0], a[1], a[2]);
-                }
-                Console.WriteLine();
-
-                //Поиск максимального элемента ДНК
-                int max = dnk[0][0];
-                int _imax = dnk[0][1];
-                int _jmax = dnk[0][2];
-                for (int q = 0; q < dnk.Count; q++)
-                {
-                    if (max < dnk[q][0])
-                    {
-                        max = dnk[q][0];
-                        _imax = dnk[q][1];
-                        _jmax = dnk[q][2];
-                    }
-                }
-                Console.WriteLine("Максимальный элемент: {0}[{1},{2}]", max, _imax, _jmax);
-
-                //Цикл перераспределения
-                if (max > 0)
-                {
-                    Console.WriteLine("Распределение не оптимально");
-                    int min = 10000;
-                    int selecti = _imax;
-                    int selectj = _jmax;
-                    bool move = true;
-                    while (true)
-                    {
-                        for (int l = 1; l < data.Count; l++)
-                        {
-                            if (selecti + l < data.Count && data[selecti + l][selectj][1] != 0 && move == true)
+                //расчет потенциалов 
+                V[maxV] = 0;
+                U[maxU] = mainData[maxV, maxU].Value - V[maxV];
+                for (int sania = 0; sania < m; sania++) 
+                    for (int i = 0; i < n; i++)
+                        for (int j = 0; j < m; j++)
+                            if (mainData[i, j].Delivery != 0 && (V[i] == 99999 || U[j] == 99999)) //проверяется, является ли поставка пустой и не записаны ли для этой ячейки нормальные потенциалы
                             {
-                                selecti = selecti + l;
-                                if (min > data[selecti][_jmax][1])
+                                if (V[i] == 99999 && U[j] == 99999) //если обе такие, считать нечего
+                                    continue;
+                                if (V[i] != 99999)
                                 {
-                                    min = data[selecti][_jmax][1];
+                                    for (int k = 0; k < m; k++)
+                                        if (mainData[i, k].Delivery != 0)
+                                            U[k] = mainData[i, k].Value - V[i];
                                 }
-                                move = false;
-                                break;
-                            }
+                                if (U[j] != 99999)
+                                    for (int k = 0; k < n; k++)
+                                        if (mainData[k, j].Delivery != 0) V[k] = mainData[k, j].Value - U[j];
 
-                            if (selecti - l < data.Count && selecti - l >= 0 && data[selecti - l][selectj][1] != 0 && move == true)
-                            {
-                                selecti = selecti - l;
-                                if (min > data[selecti][selectj][1])
-                                {
-                                    min = data[selecti][selectj][1];
-                                }
-                                move = false;
-                                break;
                             }
-                        }
-
-                        if (selecti == _imax)
+                //рассчет дельты (V[i] + U[j] - C[i,j]) и занесения максимальной в соответсвующий список
+                //список очищается для выполнения алгоритма в цикле
+                maxDelta.Clear();
+                maxDelta.Add(new int[] { 0, 0, 0 });
+                delta = new int[n, m];
+                for (int i = 0; i < n; i++)
+                    for (int j = 0; j < m; j++)
+                        if (mainData[i, j].Delivery == 0)
                         {
-                            Console.WriteLine(min);
-                            break;
-                        }
-
-
-                        for (int l = 1; l < data.Count; l++)
-                        {
-                            if (selectj + l < data.Count && data[selecti][selectj + l][1] != 0 && move == false)
+                            delta[i, j] = U[j] + V[i] - mainData[i, j].Value;
+                            if (delta[i, j] > maxDelta[0][0])
                             {
-                                selectj = selectj + l;
-                                move = true;
-                                break;
-                            }
-
-                            if (selectj - l < data.Count && selecti - l >= 0 && data[selecti][selectj - l][1] != 0 && move == false)
-                            {
-                                selectj = selectj - l;
-                                move = true;
-                                break;
+                                maxDelta.RemoveAt(0);
+                                maxDelta.Add(new int[] { delta[i, j], i, j });
                             }
                         }
-                        if (selectj == _jmax)
-                        {
-                            Console.WriteLine(min);
-                            break;
-                        }
-                    }
-                    //Повторный проход по циклу распределения с распределением элементов
-
-                    data[_imax][_jmax][1] = min;
-                    selecti = _imax;
-                    selectj = _jmax;
-                    move = true;
-
-                    while (true)
+                //проверка оптимальности метода
+                //если есть хоть одна положительная дельта, то решение не оптимально 
+                for (int i = 0; i < n; i++)
+                {
+                    for (int j = 0; j < m; j++)
                     {
-                        for (int l = 1; l < data.Count; l++)
-                        {
-                            if (selecti + l < data.Count && data[selecti + l][selectj][1] != 0 && move == true)
-                            {
-                                selecti = selecti + l;
-                                data[selecti][selectj][1] = data[selecti][selectj][1] - min;
-                                move = false;
-                                break;
-                            }
-
-                            if (selecti - l < data.Count && selecti - l >= 0 && data[selecti - l][selectj][1] != 0 && move == true)
-                            {
-                                selecti = selecti - l;
-                                data[selecti][selectj][1] = data[selecti][selectj][1] - min;
-                                move = false;
-                                break;
-                            }
-                        }
-
-                        if (selecti == _imax)
-                        {
-                            break;
-                        }
-
-                        for (int l = 1; l < data.Count; l++)
-                        {
-                            if (selectj + l < data.Count && data[selecti][selectj + l][1] != 0 && move == false)
-                            {
-                                selectj = selectj + l;
-                                data[selecti][selectj][1] = data[selecti][selectj][1] + min;
-                                move = true;
-                                break;
-                            }
-
-                            if (selectj - l < data.Count && selecti - l >= 0 && data[selecti][selectj - l][1] != 0 && move == false)
-                            {
-                                selectj = selectj - l;
-                                data[selecti][selectj][1] = data[selecti][selectj][1] + min;
-                                move = true;
-                                break;
-                            }
-                        }
-                        if (selectj == _jmax)
-                        {
-                            break;
-                        }
+                        if (delta[i, j] > 0) { optimSolution = false; break; }
+                        else optimSolution = true;
                     }
-
-                    //Вывод таблицы
-                    for (int q = 0; q < data.Count; q++)
-                    {
-                        foreach (int[] a in data[q])
-                        {
-                            Console.Write("{0}[{1}]; ", a[0], a[1]);
-                        }
-                        Console.WriteLine();
-                    }
-                    Console.WriteLine("-------------------------------------------------------------------");
+                    if (optimSolution == false) break;
                 }
+                if (optimSolution == false)
+                {
+                    double MaxCostInRowWithDelta = 0;
+                    int MaxCostInRowWithDeltaI = 0, MaxCostInRowWithDeltaJ = 0;
+                    //находим ячейку с поставкой и максимальными затратами в строке с макс. дельта
+                    //maxDelta[0][1] - возвращает индекс строки максимальной дельты
+                    //maxDelta[0][2] - возвращает индекс столбца максимальной дельты
+                    for (int j = 0; j < m; j++)
+                    {
+                        if (mainData[maxDelta[0][1], j].Delivery != 0 && mainData[maxDelta[0][1], j].Value > MaxCostInRowWithDelta)
+                        {
+                            MaxCostInRowWithDelta = mainData[maxDelta[0][1], j].Value;
+                            MaxCostInRowWithDeltaI = maxDelta[0][1];
+                            MaxCostInRowWithDeltaJ = j;
+                        }
+                    }
+                    //находим ячейку с поставкой и максимальными затратами в столбце с макс. дельта
+                    double MaxCostInCOLUMNWithDelta = 0;
+                    int MaxCostInColumnWithDeltaI = 0, MaxCostInColumnWithDeltaJ = 0;
+
+                    for (int i = 0; i < n; i++)
+                    {
+                        if (mainData[i, maxDelta[0][2]].Delivery != 0 && mainData[i, maxDelta[0][2]].Value > MaxCostInCOLUMNWithDelta)
+                        {
+                            MaxCostInCOLUMNWithDelta = mainData[i, maxDelta[0][2]].Value;
+                            MaxCostInColumnWithDeltaI = i;
+                            MaxCostInColumnWithDeltaJ = maxDelta[0][2];
+                        }
+                    }
+                    //находим, сколько товара мы можем переместить
+                    // сравнивается ячейка с поставкой и макс. затратами в столбце и в строке с макс. дельта
+                    // если какая-то из них больше, он берет меньшую
+                    double MaxAmountWeCanAfford;
+                    if (mainData[MaxCostInColumnWithDeltaI, MaxCostInColumnWithDeltaJ].Delivery > mainData[MaxCostInRowWithDeltaI, MaxCostInRowWithDeltaJ].Delivery)
+                    {
+                        MaxAmountWeCanAfford = mainData[MaxCostInRowWithDeltaI, MaxCostInRowWithDeltaJ].Delivery;
+                    }
+                    else
+                    {
+                        MaxAmountWeCanAfford = mainData[MaxCostInColumnWithDeltaI, MaxCostInColumnWithDeltaJ].Delivery;
+                    }
+                    //перемещаем товар
+                    //эта ячейка - поставка с макс. затратами в строке с макс. дельта, из неё вычитают перемещенный поставку
+                    mainData[MaxCostInRowWithDeltaI, MaxCostInRowWithDeltaJ].Delivery -= (int)MaxAmountWeCanAfford;
+                    //эта ячейка - сама макс. дельта, в неё перемещают поставку
+                    mainData[maxDelta[0][1], maxDelta[0][2]].Delivery += (int)MaxAmountWeCanAfford;
+                    //эта ячейка - поставка с макс. затратами в столбце с макс. дельта, из неё вычитают перемещенный поставку
+                    mainData[MaxCostInColumnWithDeltaI, MaxCostInColumnWithDeltaJ].Delivery -= (int)MaxAmountWeCanAfford;
+                    //эта ячейка сод-ит индекс стр. из ячейки с макс. зат-ми в ст-бце с макс.д. и индекс ст-бца из ячейки с макс. зат-ми в стр-ке с макс.д.
+                    //её заполняют как противолежащую максимальной дельте, таким образом образуя прямоугольник или квадрат
+                    mainData[MaxCostInColumnWithDeltaI, MaxCostInRowWithDeltaJ].Delivery += (int)MaxAmountWeCanAfford;
+                }
+                //рассчет суммы, если решение оптимально
                 else
                 {
-                    Console.WriteLine("Распределение оптимально");
-                    for (int q = 0; q < data.Count; q++)
-                    {
-                        for (int k = 0; k < data[0].Count; k++)
-                        {
-                            if (data[q][k][0] == 1000)
-                            {
-                                data[q][k][0] = 0;
-                            }
-                        }
-                        Console.WriteLine();
-                    }
-                    Console.WriteLine("-------------------------------------------------------------------");
-                    Console.WriteLine("Итоговое перераспределение:");
-                    for (int q = 0; q < data.Count; q++)
-                    {
-                        foreach (int[] a in data[q])
-                        {
-                            Console.Write("{0}[{1}]; ", a[0], a[1]);
-                        }
-                        Console.WriteLine();
-                    }
+                    for (int i = 0; i < n; i++)
+                        for (int j = 0; j < m; j++)
+                            summ += mainData[i, j].Delivery * mainData[i, j].Value;
                     break;
                 }
             }
-            Console.Read();
+            //подготовка результатов для записи в файл
+            List<string[]> message = new List<string[]>();
+            for (int i = 0; i < n; i++)
+            {
+                string[] row = new string[m];
+                for (int j = 0; j < m; j++)
+                    row[j] = (mainData[i, j].Value + "/" + mainData[i, j].Delivery + "\t");
+                message.Add(row);
+            }
+            message.Add(new string[] { "Оптимальная стоимость", summ.ToString() });
+            ReadSaveData.WriteToFile("VivodPot.csv", message);
+        }
+        // оставьте в покое метод... он мне где-то нужен был
+        void FindMin()
+        {
+            int min = mainData[0, 0].Value;
+            minData = new int[3];
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < m; j++)
+                    if (min > mainData[i, j].Value && mainData[i, j].Value != 0 && min != 0)
+                    {
+                        min = mainData[i, j].Value;
+                        minData[0] = min;
+                        minData[1] = i;
+                        minData[2] = j;
+                    }
+        }
+        void FindMin(int k)
+        {
+            int min = mainData[0, 0].Value;
+            minData = new int[3];
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < m; j++)
+                    if (min > mainData[i, j].Value && mainData[i, j].Value != 0 && min != 0 && mainData[i, j].Delivery == 0 && elemChecked[i, j] == false)
+                    {
+                        min = mainData[i, j].Value;
+                        minData[0] = min;
+                        minData[1] = i;
+                        minData[2] = j;
+                    }
         }
     }
 }

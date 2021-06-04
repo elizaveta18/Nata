@@ -31,7 +31,8 @@ namespace _1Класс
                 }
                 else if (nom == 3)
                 {
-                    
+                    PotentialMethod p = new PotentialMethod("pot.csv");
+                    p.MainSolution();
                 }
                 else if (nom == 4)
                 {

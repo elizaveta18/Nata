@@ -49,6 +49,7 @@
     <Compile Include="Class4%28критический путь%29.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Для потенциалов.cs" />
     <Compile Include="Нужные методы.cs" />
     <Compile Include="Симплекс-метод\Ввод.cs" />
     <Compile Include="Симплекс-метод\Метод.cs" />
