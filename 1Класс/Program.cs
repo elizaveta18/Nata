@@ -31,11 +31,12 @@ namespace _1Класс
                 }
                 else if (nom == 3)
                 {
-
+                    
                 }
                 else if (nom == 4)
                 {
-
+                    Сommivoyageur commivoyageur = new Сommivoyageur("Kom.csv", "VivodKom.txt");
+                    commivoyageur.Calculate();
                 }
                 else if (nom == 5)
                 {

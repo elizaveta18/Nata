@@ -6,7 +6,7 @@ using System.Text;
 
 namespace _1Класс
 {
-    class Class3
+    class Сommivoyageur
     {
         string readPath;
         string savingPath;
@@ -15,7 +15,7 @@ namespace _1Класс
         int uzli; //Длина строк и столбцов массива time
         string[] puti = new string[0]; // Массив, содержащий полученные пути
 
-        public void Сommivoyageur(string readPath, string savingPath)
+        public Сommivoyageur(string readPath, string savingPath)
         {
             this.readPath = readPath;
             this.savingPath = savingPath;
@@ -47,7 +47,7 @@ namespace _1Класс
 
         }
 
-        string[] Schet(int pi, int i1)
+        public string[] Schet(int pi, int i1)
         {
             int min = time[i1, 0], mi2 = 0;
             if (puti[pi].Length != time.GetLength(0) * 2 - 1) //Проверка, что количество узлов в пути ниже количества узлов в массиве длина строк и столбцов массива умножается на 2, потому что в пятх также считаются '-' между узлами
