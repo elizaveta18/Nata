@@ -39,7 +39,7 @@ namespace _1Класс
                 }
                 else if (nom == 5)
                 {
-                    CrtPth Cp = new CrtPth("vvodKritic.csv");
+                    //CrtPth Cp = new CrtPth("vvodKritic.csv");
                 }
                 else if (nom == 6)
                 {

@@ -6,188 +6,123 @@ using System.Text;
 
 namespace _1Класс
 {
-    internal static class Class3
-    {         
-        public static void Kom()
+    class Class3
+    {
+        string readPath;
+        string savingPath;
+        int[,] time; //Массив, содержащий введённые значения
+        int[] f = new int[0]; //Массив, содержащий длины путей
+        int uzli; //Длина строк и столбцов массива time
+        string[] puti = new string[0]; // Массив, содержащий полученные пути
+
+        public void Сommivoyageur(string readPath, string savingPath)
         {
-            //create an initial tour out of nearest neighbors
-            var stops = Enumerable.Range(1, 10)
-                                  .Select(i => new Stop(new City(i)))
-                                  .NearestNeighbors()
-                                  .ToList();
-            //create next pointers between them
-            stops.Connect(true);
-            //wrap in a tour object
-            Tour startingTour = new Tour(stops);
-            //the actual algorithm
-            while (true)
-            {
-                Console.WriteLine(startingTour);
-                var newTour = startingTour.GenerateMutations()
-                                          .MinBy(tour => tour.Cost());
-                if (newTour.Cost() < startingTour.Cost()) startingTour = newTour;
-                else break;
-            }
-            Console.ReadLine();
+            this.readPath = readPath;
+            this.savingPath = savingPath;
         }
-        private class City
+
+        bool PoiskSovpad(int pi, int j)
         {
-            private static Random rand = new Random();
-            public City(int cityName)
+            bool sch = true; //совпадений нет
+            foreach (string s in puti[pi].Split('-'))
             {
-                X = rand.NextDouble() * 100;
-                Y = rand.NextDouble() * 50;
-                CityName = cityName;
-            }
-            public double X { get; private set; }
-            public double Y { get; private set; }
-            public int CityName { get; private set; }
-        }
-        private class Stop
-        {
-            public Stop(City city)
-            {
-                City = city;
-            }
-            public Stop Next { get; set; }
-            public City City { get; set; }
-            public Stop Clone()
-            {
-                return new Stop(City);
-            }
-            public static double Distance(Stop first, Stop other)
-            {
-                return Math.Sqrt(
-                    Math.Pow(first.City.X - other.City.X, 2) +
-                    Math.Pow(first.City.Y - other.City.Y, 2));
-            }
-            //list of nodes, including this one, that we can get to
-            public IEnumerable<Stop> CanGetTo()
-            {
-                var current = this;
-                while (true)
+                if (Convert.ToInt32(s) == j)
                 {
-                    yield return current;
-                    current = current.Next;
-                    if (current == this) break;
+                    sch = false; //есть
+                    break;
                 }
             }
-            public override bool Equals(object obj)
-            {
-                return City == ((Stop)obj).City;
-            }
-            public override int GetHashCode()
-            {
-                return City.GetHashCode();
-            }
-            public override string ToString()
-            {
-                return City.CityName.ToString();
-            }
+            return sch;
         }
-        private class Tour
+
+        void CalculatePaths()
         {
-            public Tour(IEnumerable<Stop> stops)
+            for (int i = 0; i < uzli; i++) //точка отправления - передаем в метод для поиска путей
             {
-                Anchor = stops.First();
+                Array.Resize(ref puti, puti.Length + 1); //Увеличение размера массива путей
+                Array.Resize(ref f, f.Length + 1); //Увеличение размера массива длины путей
+                puti[puti.Length - 1] = $"{i + 1}"; //Запись в конец пути стартового элемента (с которого начинается путь)
+                puti = Schet(puti.Length - 1, i); //Добавление нового пути
             }
-            //the set of tours we can make with 2-opt out of this one
-            public IEnumerable<Tour> GenerateMutations()
+
+        }
+
+        string[] Schet(int pi, int i1)
+        {
+            int min = time[i1, 0], mi2 = 0;
+            if (puti[pi].Length != time.GetLength(0) * 2 - 1) //Проверка, что количество узлов в пути ниже количества узлов в массиве длина строк и столбцов массива умножается на 2, потому что в пятх также считаются '-' между узлами
             {
-                for (Stop stop = Anchor; stop.Next != Anchor; stop = stop.Next)
+                for (int j = 0; j < time.GetLength(0); j++) //Просмотр строки в поиске элемента, который не был записан в пути
                 {
-                    //skip the next one, since you can't swap with that
-                    Stop current = stop.Next.Next;
-                    while (current != Anchor)
+                    if (time[i1, j] != 0)
                     {
-                        yield return CloneWithSwap(stop.City, current.City);
-                        current = current.Next;
+                        if (PoiskSovpad(pi, j + 1)) //Метод поиска совпадений в рассматриваемом пути, возвращает false, если в пути этот узел уже использовался
+                        {
+                            min = time[i1, j]; //Первый элемент строки, не встречавшийся до этого в пути, берётся за минимум
+                            mi2 = j; //Запись индекса элемента
+                            break;
+                        }
                     }
                 }
-            }
-            public Stop Anchor { get; set; }
-            public Tour CloneWithSwap(City firstCity, City secondCity)
-            {
-                Stop firstFrom = null, secondFrom = null;
-                var stops = UnconnectedClones();
-                stops.Connect(true);
-                foreach (Stop stop in stops)
+                for (int j = 0; j < time.GetLength(0); j++) //Просмотр строки в поисках элемента строки который меньше ранее записанного первого элемента, не встречающегося в пути
                 {
-                    if (stop.City == firstCity) firstFrom = stop;
-                    if (stop.City == secondCity) secondFrom = stop;
+                    if (time[i1, j] != 0)
+                    {
+                        if (PoiskSovpad(pi, j + 1)) //Проверяет на совпадения в пути
+                        {
+                            if (min > time[i1, j] || (min == time[i1, j] && j == mi2)) //Если элемент меньше минимума или равен ему и не является им же, то он является новым минимумом и его индекс записывается
+                            {
+                                min = time[i1, j];
+                                mi2 = j;
+
+                            }
+                        }
+                    }
                 }
-                //the swap part
-                var firstTo = firstFrom.Next;
-                var secondTo = secondFrom.Next;
-                //reverse all of the links between the swaps
-                firstTo.CanGetTo()
-                       .TakeWhile(stop => stop != secondTo)
-                       .Reverse()
-                       .Connect(false);
-                firstTo.Next = secondTo;
-                firstFrom.Next = secondFrom;
-                var tour = new Tour(stops);
-                return tour;
+                for (int j = 0; j < time.GetLength(0); j++) //Добавление узлов в путь и расстояния между ними
+                {
+                    if (PoiskSovpad(pi, j + 1))
+                        if (min == time[i1, j] && j != mi2) //Если нашёл элемент, равный минимуму, но не являющийся им
+                        {
+                            string s = puti[pi]; //Запись во временную переменную расматриваемого пути
+                            int ff = f[pi]; //Запись во временную переменную длину расматриваемого пути 
+                            puti[pi] += $"-{mi2 + 1}"; //Добавление в путь узла, в котором находится минимум строки
+                            f[pi] += min; //Добавление к длине пути минимум строки
+                            puti = Schet(pi, mi2); //Рассчёт дальнейшего пути, начиная с узла, в котором находится минимум
+                            mi2 = j;
+                            Array.Resize(ref puti, puti.Length + 1); //Увеличение размера массива путей
+                            Array.Resize(ref f, f.Length + 1);//Увеличение размера массива длины путей
+                            pi = f.Length - 1;
+                            puti[pi] = s;
+                            f[pi] = ff;
+                        }
+                }
             }
-            public IList<Stop> UnconnectedClones()
+            else
             {
-                return Cycle().Select(stop => stop.Clone()).ToList();
+                foreach (string s in puti[pi].Split('-'))
+                {
+                    mi2 = Convert.ToInt32(s);
+
+                    min = time[i1, mi2 - 1];
+                    break;
+                }
+                puti[pi] += $"-{mi2}";
+                f[pi] += min;
+                return puti;
             }
-            public double Cost()
-            {
-                return Cycle().Aggregate(
-                    0.0,
-                    (sum, stop) =>
-                    sum + Stop.Distance(stop, stop.Next));
-            }
-            private IEnumerable<Stop> Cycle()
-            {
-                return Anchor.CanGetTo();
-            }
-            public override string ToString()
-            {
-                string path = String.Join(
-                    "->",
-                    Cycle().Select(stop => stop.ToString()).ToArray());
-                return String.Format("Cost: {0}, Path:{1}", Cost(), path);
-            }
+            puti[pi] += $"-{mi2 + 1}";
+            f[pi] += min;
+            puti = Schet(pi, mi2);
+            return puti;
         }
-        //take an ordered list of nodes and set their next properties
-        private static void Connect(this IEnumerable<Stop> stops, bool loop)
+
+        public void Calculate()
         {
-            Stop prev = null, first = null;
-            foreach (var stop in stops)
-            {
-                if (first == null) first = stop;
-                if (prev != null) prev.Next = stop;
-                prev = stop;
-            }
-            if (loop)
-            {
-                prev.Next = first;
-            }
-        }
-        //T with the smallest func(T)
-        private static T MinBy<T, TComparable>(
-            this IEnumerable<T> xs,
-            Func<T, TComparable> func)
-            where TComparable : IComparable<TComparable>
-        {
-            return xs.DefaultIfEmpty().Aggregate(
-                (maxSoFar, elem) =>
-                func(elem).CompareTo(func(maxSoFar)) > 0 ? maxSoFar : elem);
-        }
-        //return an ordered nearest neighbor set
-        private static IEnumerable<Stop> NearestNeighbors(this IEnumerable<Stop> stops)
-        {
-            var stopsLeft = stops.ToList();
-            for (var stop = stopsLeft.First();
-                 stop != null;
-                 stop = stopsLeft.MinBy(s => Stop.Distance(stop, s)))
-            {
-                stopsLeft.Remove(stop);
-                yield return stop;
-            }
+            ReadSaveData.ReadData(readPath, ref time);
+            uzli = time.GetLength(0);
+            CalculatePaths();
+            ReadSaveData.WriteToFile(savingPath, uzli, puti, f);
         }
     }
 }
