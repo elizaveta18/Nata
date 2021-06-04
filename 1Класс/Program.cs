@@ -45,10 +45,6 @@ namespace _1Класс
                 {
                     CrtPth kr = new CrtPth("vvodKritic.csv");                  
                 }
-                else if (nom == 7)
-                {
-
-                }
                 else
                 {
                     Console.WriteLine("Неверный ввод!");
